@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Antes de continuar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== CONFIGURE AQUI AS CORES ====== */
+  :root {
+    --fundo: #fff0f3;
+    --cartao: #ffffff;
+    --texto: #2a0d14;
+    --suave: #7a5a62;
+    --destaque: #fe2c55;
+    --destaque-hover: #e0183f;
+    --erro: #b3261e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fundo);
+    color: var(--texto);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  }
+  .caixa {
+    width: 100%;
+    max-width: 420px;
+    background: var(--cartao);
+    border-radius: 20px;
+    padding: 36px 28px 30px;
+    box-shadow: 0 20px 50px -24px rgba(254, 44, 85, .35);
+  }
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 1.85rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+  }
+  p.sub {
+    color: var(--suave);
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 26px;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: .95rem;
+    margin-bottom: 8px;
+  }
+  input[type="text"] {
+    width: 100%;
+    font: inherit;
+    font-size: 1.05rem;
+    padding: 14px 16px;
+    border: 2px solid #f7cdd6;
+    border-radius: 12px;
+    background: #fffafb;
+    color: var(--texto);
+    transition: border-color .15s;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--destaque);
+  }
+  .erro {
+    color: var(--erro);
+    font-size: .88rem;
+    min-height: 1.3em;
+    margin-top: 8px;
+  }
+  button {
+    width: 100%;
+    margin-top: 10px;
+    font: inherit;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--destaque);
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  button:hover { background: var(--destaque-hover); }
+  button:active { transform: scale(.98); }
+  button:focus-visible { outline: 3px solid var(--texto); outline-offset: 2px; }
+  button:disabled { opacity: .7; cursor: wait; }
+  footer {
+    text-align: center;
+    font-size: .8rem;
+    line-height: 1.6;
+    color: var(--suave);
+    max-width: 420px;
+  }
+  footer a { color: inherit; }
+  /* Campo invisível para pegar bots (honeypot) */
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<main class="caixa">
+  <h1>Falta só um passo</h1>
+  <p class="sub">Informe sua idade para acessar a página.</p>
+
+  <form id="form" novalidate>
+    <label for="nome">Sua idade</label>
+    <input type="text" id="nome" name="idade" inputmode="numeric" autocomplete="off" maxlength="3" placeholder="Ex.: 35">
+
+    <!-- honeypot: humanos não veem, bots costumam preencher -->
+    <div class="hp" aria-hidden="true">
+      <label for="site">Não preencha</label>
+      <input type="text" id="site" name="site" tabindex="-1" autocomplete="off">
+    </div>
+
+    <div class="erro" id="erro" role="alert"></div>
+    <button type="submit" id="btn">Continuar</button>
+  </form>
+</main>
+
+<footer>
+  <p>© 2026 Nova Rota Digital Ltda. Todos os direitos reservados.</p>
+  <p>CNPJ 00.000.000/0001-00 · <a href="#">Política de Privacidade</a> · <a href="#">Termos de Uso</a></p>
+</footer>
+
+<script>
+  /* ====== CONFIGURE AQUI ====== */
+  const LINK_DESTINO = "https://gobon-a2jn.vercel.app/";  // seu link de destino
+  const TEMPO_MINIMO = 1500;                          // ms mínimos na página antes de enviar
+  const IDADE_MINIMA = 1;                             // idade mínima aceita
+  const IDADE_MAXIMA = 99;                            // idade máxima aceita
+  /* ============================ */
+
+  const inicio = Date.now();
+  let interagiu = false;
+  ["keydown", "pointerdown", "touchstart"].forEach(ev =>
+    document.addEventListener(ev, () => { interagiu = true; }, { once: true, passive: true })
+  );
+
+  const form = document.getElementById("form");
+  const nome = document.getElementById("nome");
+  const erro = document.getElementById("erro");
+  const btn  = document.getElementById("btn");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    erro.textContent = "";
+
+    const valor = nome.value.trim();
+    const pareceBot =
+      document.getElementById("site").value !== "" ||   // preencheu o campo escondido
+      Date.now() - inicio < TEMPO_MINIMO ||              // rápido demais
+      !interagiu ||                                      // nunca tocou/digitou
+      navigator.webdriver === true;                      // navegador automatizado
+
+    if (!/^\d{1,3}$/.test(valor)) {
+      erro.textContent = "Digite sua idade usando só números.";
+      nome.focus();
+      return;
+    }
+    const idade = parseInt(valor, 10);
+    if (idade < IDADE_MINIMA) {
+      erro.textContent = "Digite uma idade válida.";
+      nome.focus();
+      return;
+    }
+    if (idade > IDADE_MAXIMA) {
+      erro.textContent = "Digite uma idade válida.";
+      nome.focus();
+      return;
+    }
+
+    if (pareceBot) {
+      // Não avisa o bot, só não redireciona
+      erro.textContent = "Não foi possível continuar. Tente novamente.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Abrindo...";
+    window.location.href = LINK_DESTINO;
+  });
+</script>
+</body>
+</html>
